@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "73384152866",
+    "firebase_url": "https://project-e41b4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "project-e41b4",
+    "storage_bucket": "project-e41b4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:73384152866:android:42cc178256ee34b975df7b",
+        "android_client_info": {
+          "package_name": "com.example.qrscan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4N21Rjwrgpe2GCSifqIPsmrcfFQe_pmk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
