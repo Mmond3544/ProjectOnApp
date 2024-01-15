@@ -76,11 +76,12 @@ public class MainActivity extends AppCompatActivity {
     stdAdapter stdadapter;
 
     FirebaseFirestore db;
-    Button BTScan,enter,input,cancel;
+    Button BTScan,enter,input,cancel,confirm,mannual;
     EditText otherTXT;
     Spinner room,exam;
     Map<String, Object> data = new HashMap<>();
     ProgressDialog progressDialog;
+    AlertDialog dialog;
     public String testName,type,sj,teacher,stdroom,adviser,id,ID;
     public Boolean select = false;
     public ArrayList<String> stdID;
@@ -103,6 +104,8 @@ public class MainActivity extends AppCompatActivity {
         BTScan = findViewById(R.id.btScan);
         input = findViewById(R.id.ManualBtn);
         cancel = findViewById(R.id.CancelBtn);
+        confirm = findViewById(R.id.confirmbtn);
+        //mannual = findViewById(R.id.ManualBtn);
         progressDialog = new ProgressDialog(this);
         String[] items = new String[]{"MidTerm", "Final", "Other"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, items);
@@ -124,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                                     strings.add(String.valueOf(document.getString("room")));
                                     Log.d(TAG, "add to array");
                                 }
-                                stdID.add(String.valueOf(document.getString("ID")));
+
                             }
 
                             Log.d(TAG, String.valueOf(strings.size()));
@@ -162,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
                     select = true;
                 }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
 
@@ -191,6 +193,69 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
     }
 });
+
+        input.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Mannual Input");
+
+                View getview = getLayoutInflater().inflate(R.layout.dialog_box,null);
+                EditText inputID;
+                Button submit;
+                inputID = getview.findViewById(R.id.inputIDtxt);
+                submit = getview.findViewById(R.id.submitbtn);
+                builder.setView(getview);
+                dialog = builder.create();
+                dialog.show();
+                submit.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        String getid = String.valueOf(inputID.getText());
+                        db.collection("student").whereEqualTo("room", room.getSelectedItem().toString()).whereEqualTo("ID", getid).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    for (QueryDocumentSnapshot document : task.getResult()) {
+                                        ID = document.getId();
+                                        Map<String, Object> data = new HashMap<>();
+                                        String getid = String.valueOf(inputID.getText());
+                                        if(ID.equals(getid)) {
+                                            data.put(getid, true);
+                                            data.put(getid + "_time", FieldValue.serverTimestamp());
+                                            db.collection("test").document(testName).update(data).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void unused) {
+                                                    Toast.makeText(MainActivity.this,"Add Data Success",Toast.LENGTH_SHORT).show();
+                                                    EvenChangListrner();
+                                                    dialog.dismiss();
+
+                                                }
+                                            });
+                                        }
+                                        else {
+                                            Toast.makeText(MainActivity.this,"นักศึกษารหัส : "+getid+"ไม่ได้ลงทะเบียนในรายวิชานี้",Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                    //stdID.add(result.getContents());
+                                } else {
+                                    Log.d(TAG, "Error getting documents: ", task.getException());
+                                }
+                            }
+                        });
+                        //ID = result.getContents();
+                    }
+                });
+            }
+        });
+        confirm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent send = new Intent(MainActivity.this, MainActivity2.class);
+                send.putExtra("KEY_SENDER",teacher);
+                startActivity(send);
+            }
+        });
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -204,6 +269,7 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 BTScan.setEnabled(false);
                 input.setEnabled(false);
                 enter.setEnabled(true);
+                confirm.setEnabled(false);
                 db.collection("test").document(testName)
                         .delete()
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -218,7 +284,6 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                                 Log.w(TAG, "Error deleting document", e);
                             }
                         });
-
             }
         });
         enter.setOnClickListener(new View.OnClickListener() {
@@ -227,6 +292,7 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 if(TextUtils.isEmpty(otherTXT.getText().toString()) && select == true ){
                     Toast.makeText(MainActivity.this,"Please input Test name",Toast.LENGTH_SHORT).show();
                 }else{
+                    confirm.setEnabled(true);
                     cancel.setEnabled(true);
                     BTScan.setEnabled(true);
                     input.setEnabled(true);
@@ -257,7 +323,6 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     }
                     data.put("adviser", adviser);
                     data.put("subject", sj);
-
                     data.put("room", room.getSelectedItem().toString());
                     data.put("type", type);
                     data.put("Teacher", teacher);
@@ -306,38 +371,43 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     dialogInterface.dismiss();
-
                 }
             }).show();
-            ID = result.getContents();
-            Map<String, Object> data = new HashMap<>();
-            if(stdID.contains(result.getContents())) {
-                data.put(result.getContents(), true);
-                data.put(result.getContents() + "_time", FieldValue.serverTimestamp());
-                db.collection("test").document(testName).update(data).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        Toast.makeText(MainActivity.this,"Add Data Success",Toast.LENGTH_SHORT).show();
-                        EvenChangListrner();
+            db.collection("student").whereEqualTo("room", room.getSelectedItem().toString()).whereEqualTo("ID", result.getContents()).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            ID = document.getId();
+                            Map<String, Object> data = new HashMap<>();
+
+                            if(ID.equals(result.getContents())) {
+                                data.put(result.getContents(), true);
+                                data.put(result.getContents() + "_time", FieldValue.serverTimestamp());
+                                db.collection("test").document(testName).update(data).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        Toast.makeText(MainActivity.this,"Add Data Success",Toast.LENGTH_SHORT).show();
+                                        EvenChangListrner();
+                                    }
+                                });
+                            }
+                            else {
+                                Toast.makeText(MainActivity.this,"นักศึกษารหัส : "+result.getContents()+"ไม่ได้ลงทะเบียนในรายวิชานี้",Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        //stdID.add(result.getContents());
+                    } else {
+                        Log.d(TAG, "Error getting documents: ", task.getException());
                     }
-                });
-            }
-            else {
-                Toast.makeText(MainActivity.this,"นักศึกษารหัส : "+result.getContents()+"ไม่ได้ลงทะเบียนในรายวิชานี้",Toast.LENGTH_SHORT).show();
-            }
+                }
+            });
+            //ID = result.getContents();
+
         }
     });
     private void EvenChangListrner() {
 
-        String getType;
-        if(exam.getSelectedItemPosition() == 0){
-            getType = "MidTerm";
-        } else if (exam.getSelectedItemPosition() == 1) {
-            getType = "Final";
-        }
-        else{
-            getType = otherTXT.getText().toString();
-        }
         db.collection("student").whereEqualTo("ID",ID)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
