@@ -2,6 +2,7 @@ package com.example.qrscan;
 
 import static androidx.constraintlayout.widget.ConstraintLayoutStates.TAG;
 import androidx.activity.result.ActivityResult;
+import com.google.firebase.Timestamp;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,6 +44,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.Timestamp;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -74,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     ArrayList<student> studentArrayList;
     stdAdapter stdadapter;
-
+    RadioButton term1,term2;
     FirebaseFirestore db;
     Button BTScan,enter,input,cancel,confirm,mannual;
     EditText otherTXT;
@@ -85,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     public String testName,type,sj,teacher,stdroom,adviser,id,ID;
     public Boolean select = false;
     public ArrayList<String> stdID;
+    public Date start,end;
     CardView cardView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
         input = findViewById(R.id.ManualBtn);
         cancel = findViewById(R.id.CancelBtn);
         confirm = findViewById(R.id.confirmbtn);
+        term1 = findViewById(R.id.term1);
+        term2 = findViewById(R.id.term2);
         //mannual = findViewById(R.id.ManualBtn);
         progressDialog = new ProgressDialog(this);
         String[] items = new String[]{"MidTerm", "Final", "Other"};
@@ -157,11 +162,41 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if(i==0){
                     otherTXT.setVisibility(View.INVISIBLE);
+                    enter.setEnabled(true);
                 } else if (i==1) {
                     otherTXT.setVisibility(View.INVISIBLE);
+                    String getroom = room.getSelectedItem().toString();
+                    getroom = getroom.replace("/","-");
+                    db.collection("final_test").document(getroom).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                            DocumentSnapshot document = task.getResult();
+                            String idstart = id+"_start";
+                            start = document.getDate(idstart);
+                            String idend = id+"_end";
+                            end = document.getDate(idend);
+                            //Toast.makeText(MainActivity.this,String.valueOf(start)+"Time "+String.valueOf(end),Toast.LENGTH_SHORT).show();
+                            Timestamp currentTimestamp = Timestamp.now();
+                            Date current = currentTimestamp.toDate();
+                            //Toast.makeText(MainActivity.this,current.toString(),Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, start.toString());
+                            Log.d(TAG, current.toString());
+                            Log.d(TAG, end.toString());
+                            if (start.before(current) && current.before(end)) {
+                                enter.setEnabled(true);
+                                //Toast.makeText(MainActivity.this,"Current timestamp is within the range.",Toast.LENGTH_SHORT).show();
+                            }
+                            else{
+                                enter.setEnabled(false);
+                            }
+
+                        }
+                    });
+                    //Toast.makeText(MainActivity.this,String.valueOf(start)+"Time "+String.valueOf(end),Toast.LENGTH_SHORT).show();
                 }
-                if(i==2){
+                else if(i==2){
                     otherTXT.setVisibility(View.VISIBLE);
+                    enter.setEnabled(true);
                     select = true;
                 }
             }
@@ -173,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
 room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        exam.setSelection(0);
         db.collection("student").whereEqualTo("room", room.getSelectedItem().toString()).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -312,7 +348,12 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     stdadapter = new stdAdapter(MainActivity.this,studentArrayList);
                     recyclerView.setAdapter(stdadapter);
                     Toast.makeText(MainActivity.this,String.valueOf(room.getSelectedItem()),Toast.LENGTH_SHORT).show();
-
+                    if(term1.isChecked()){
+                        data.put("term","1");
+                    }
+                    else if(term2.isChecked()){
+                        data.put("term","2");
+                    }
                     if(exam.getSelectedItemPosition() == 0){
                         type = "MidTerm";
                     } else if (exam.getSelectedItemPosition() == 1) {
