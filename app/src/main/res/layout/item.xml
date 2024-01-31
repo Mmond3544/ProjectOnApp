@@ -7,7 +7,7 @@
     android:foregroundGravity="center_vertical|clip_horizontal"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
-    app:cardBackgroundColor="#ebebeb">
+    app:cardBackgroundColor="#BEADFA">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,7 +31,7 @@
                 android:layout_weight="1"
                 android:fontFamily="@font/prompt_bold"
                 android:text="Subject"
-                android:textColor="@color/yellow"
+                android:textColor="#FFF8C9"
                 android:textSize="30sp" />
 
 

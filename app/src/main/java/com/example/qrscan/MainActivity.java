@@ -306,6 +306,10 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 input.setEnabled(false);
                 enter.setEnabled(true);
                 confirm.setEnabled(false);
+                exam.setEnabled(true);
+                room.setEnabled(true);
+                term1.setEnabled(true);
+                term2.setEnabled(true);
                 db.collection("test").document(testName)
                         .delete()
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -328,6 +332,10 @@ room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 if(TextUtils.isEmpty(otherTXT.getText().toString()) && select == true ){
                     Toast.makeText(MainActivity.this,"Please input Test name",Toast.LENGTH_SHORT).show();
                 }else{
+                    exam.setEnabled(false);
+                    room.setEnabled(false);
+                    term1.setEnabled(false);
+                    term2.setEnabled(false);
                     confirm.setEnabled(true);
                     cancel.setEnabled(true);
                     BTScan.setEnabled(true);
